@@ -83,11 +83,12 @@ def RunTheSim(testAccy = 0.9,
 
 
 
-accValues = [0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 0.995, 0.999, 0.99999374]
+accValues = [0.5, 0.667, 0.8, 0.9, 0.95, 0.99, 0.995, 0.999, 0.9999, 0.99999374]
 results = []
 for i in accValues:
-    results.append(RunTheSim(testAccy=i,fixedSeed=False))
-#print results,accValues
+    results.append(RunTheSim(testAccy=i))
+print results
+print accValues
 
 #build 4 charts
 plt.subplot(2,2,1)
@@ -95,27 +96,27 @@ plt.plot(accValues, [x[0] for x in results],'g')
 plt.plot([accValues[0],accValues[-1]], [numActualBugs, numActualBugs],color='k', linewidth = 2, label="Num Bugs")
 plt.xlabel('Test Accuracy')
 plt.ylabel('True Positives')
-plt.title("Actual Bugs Found")
+plt.title("Actual Bugs Found (True Positive)")
 plt.legend(loc=2)
 
 plt.subplot(2,2,3)
 plt.plot(accValues,[x[1] for x in results],'g-')
 plt.xlabel('Test Accuracy')
 plt.ylabel('True Negatives')
-plt.title("Working Code Lines Identified")
+plt.title("Working Code Lines Identified (True Negative)")
 
 plt.subplot(2,2,2)
 plt.plot(accValues, [x[2] for x in results],'k')
 plt.plot([accValues[0],accValues[-1]], [numActualBugs, numActualBugs],color='r', linewidth = 2, label="Num Bugs")
 plt.xlabel('Test Accuracy')
 plt.ylabel('False Positives')
-plt.title("False Positives Identified")
+plt.title("Bogus Failures (False Positives) ")
 plt.legend(loc=3)
 
 plt.subplot(2,2,4)
 plt.plot(accValues, [x[3] for x in results],'r')
 plt.xlabel('Test Accuracy')
 plt.ylabel('False Negatives')
-plt.title("False Negatives Identified")
+plt.title("Bugs Missed (False Negatives)")
 
 plt.show()
