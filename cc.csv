@@ -1,0 +1,18 @@
+Week 19,year to date delta,measured,covered,currentCC
+AGSFulfillment,318,5073,3040,0.5993
+AGSItems,777,2655,1729,0.6512
+Eligibility,1432,10122,8288,0.8188
+Inbound,1264,5788,796,0.1375
+InboundInterfaces,1685,13715,6155,0.4488
+InboundPlacement,3633,1147,0,0
+InboundTransportation,3115,12262,6436,0.5249
+Inventory,11813,29130,5892,0.2023
+InventoryHealth,3945,34298,18859,0.5499
+InventoryMovement,931,2772,1815,0.6548
+MIC,1555,30202,23946,0.7929
+Mobile,3536,10947,9331,0.8524
+Outbound,191,27941,7321,0.262
+PreInbound,3300,34819,14894,0.4278
+Reimbursement,5536,17396,5239,0.3012
+RemovalCore,423,33490,20498,0.6121
+SpaceRobots,1819,11524,8630,0.7489
