@@ -1,6 +1,5 @@
 import random,pylab, csv
 random.seed(75961)  #Nacogdoches!
-#random.seed(100)
 
 def readCSV(path):
     rowList = []
@@ -61,28 +60,39 @@ def simpleStats(path):
             rowList.append(row)
     return rowList
 
+def getDeltaLinesHit(deltaOfLinesHit, existingCodeChangeRatio):
+    """return the number of lines of code hit this week
+    this would normally just be deltaoflineshit but there is some amount of
+    existing code that changes and that code is (possibly) already hit
+    so don't count it twice
+    """
+    retVal = deltaOfLinesHit - int((1-existingCodeChangeRatio) * deltaOfLinesHit)
+    if retVal <0:
+        retVal = 0
+    return retVal
 
-def CCGoalHit(velGoal, currentCC, meanAboveGoal = 0.05):
+def CCGoalHit(velGoal, currentCC, meanAboveGoal, useMaxofCurrentCCOrVel):
     #assumption: that the checkin will be about meanAboveGoal above the velocity goal
     r = random.normalvariate(velGoal + meanAboveGoal*velGoal,.04)
 
     #small chance the number will be below goal
-    if r<velGoal:
+    if r<velGoal and useMaxofCurrentCCOrVel==True:
         r=max(velGoal, currentCC)
-        #r=velGoal
+    else:
+        r=velGoal
     if r>1.0:
         r=1.0
-    #print(velocityGoal,currentCC,r)
     return r
 
-def RunTheSim(totalLOC = 10000,
-              initialCC = .70,
-              velGoal = 0.70 ,
-              avgNewLinesPerWeek = 100,
-              existingCodeChangeRatio = 0.6,
-              yearsToRun=10,
-              velWeeklyHitRate = 0.995,
-              pctBoneheadChance = 0.0):
+def RunTheSim(totalLOC,
+              initialCC,
+              velGoal,
+              avgNewLinesPerWeek,
+              existingCodeChangeRatio,
+              yearsToRun,
+              velWeeklyHitRate,
+              pctBoneheadChance,
+              useMaxCCorVelGoal):
     #to do: make totalLOC global since this will always revert to original cc
     linesCurrentlyHit = int(totalLOC*initialCC)
 
@@ -97,22 +107,21 @@ def RunTheSim(totalLOC = 10000,
         actualNewLines=int(existingCodeChangeRatio*sizeOfChange)
         r=random.uniform(0,1)
         if r < velWeeklyHitRate: #then the checkin hits the velocity metrics
-            pctHitThisWeek = CCGoalHit(velGoal, linesCurrentlyHit/totalLOC, meanAboveGoal=0.05)
+            pctHitThisWeek = CCGoalHit(velGoal, linesCurrentlyHit/totalLOC,0.02,useMaxCCorVelGoal)
             assert (pctHitThisWeek<=1.0)
             deltaOfLinesHit = int(pctHitThisWeek* sizeOfChange + 0.5)
-            #but 1-existingcodechangeratio * currentCC is already assumed hit, so subtract that amount
-            deltaOfLinesHit = deltaOfLinesHit - int((1-existingCodeChangeRatio) * deltaOfLinesHit)
+            deltaOfLinesHit = getDeltaLinesHit(deltaOfLinesHit, existingCodeChangeRatio)
         else: #this checkin did not hit velocity metrics
-            pctHitThisWeek = random.uniform(0.0,velGoal) # TODO: better distribution here
+            maxHitThisWeek = random.uniform(0.0,velGoal) # TODO: better distribution here
             #- 0.5 when rounding here, round down to punish not meeting goal
-            deltaOfLinesHit = int(sizeOfChange* actualNewLines - 0.5)
-            deltaOfLinesHit = deltaOfLinesHit - int((1-existingCodeChangeRatio) * deltaOfLinesHit)
+            deltaOfLinesHit = int(sizeOfChange* actualNewLines*maxHitThisWeek - 0.5)
+            deltaOfLinesHit = getDeltaLinesHit(deltaOfLinesHit, existingCodeChangeRatio)
+
             #now to really punish - big checkin with no code hit
             #if the checkin was rushed or just (frankly) boneheaded
             if random.uniform(0,1)<pctBoneheadChance:
                 #add between 1 and 30% new code to your codebase
-                #this really punishes large codebases - should there be an upper limit?
-                #the largest checkin I have seen is 118K LOC and that was a rare event
+                #this really punishes large codebases with low churn - should there be an upper limit?
                 #23-30K seems like a more reasonable upper limit, but is is boneheaded by nature...
                 actualNewLines+=totalLOC*random.uniform(.01,.3)
         totalLOC+=actualNewLines
@@ -144,10 +153,6 @@ def plotResults(wDiff, totalLOC, wLoc):
     pylab.show()
 
 
-#initialLOC = 13715
-#startingCC = .4488
-#velocityGoal = max(.75, startingCC)
-#meanLinesAddedPerWeek = 93
 
 data=simpleStats('h:\\')
 
@@ -158,12 +163,13 @@ for i in range(1,len(data)):
     name=data[i][0]
     initialLOC = int(data[i][2])    #measured
     startingCC = float(data[i][-1])
-    velocityGoal=max(.75, startingCC)
+    velocityGoal=.75
     meanLinesAddedPerWeek = int(data[i][1])/19   #note the magic number based on week 19 data
     existingCodeModifiedPerCent = 0.6 # 60% of a change is to existing code, 1- this number is new code
     yearsToRun=3
     velWeeklyHitRate=1.0
     pctBoneheadCheckin=0.0
+    useMaxOfCurrentCCovOrVelGoal=True
 
     meanLinesAddedPerWeek=int(meanLinesAddedPerWeek)
 
@@ -174,30 +180,8 @@ for i in range(1,len(data)):
                     existingCodeModifiedPerCent,
                     yearsToRun,
                     velWeeklyHitRate,
-                    pctBoneheadCheckin))
+                    pctBoneheadCheckin,
+                    useMaxOfCurrentCCovOrVelGoal))
 
 for key in resDict:
     print(key, round(resDict[key][0][52]*100,1),round(resDict[key][0][-1]*100,1))
-
-
-'''
-
-wDiff, totalLOC, wLOC = RunTheSim(initialLOC,
-                                  startingCC,
-                                  velocityGoal,
-                                  meanLinesAddedPerWeek,
-                                  yearsToRun=3,
-                                  velWeeklyHitRate=1,
-                                  pctBoneheadChance=0.00)
-#plotResults(wDiff,totalLOC, wLOC)
-'''
-#print("1 year = ", round(wDiff[52]*100,1), " 3 year = ", round(wDiff[-1]*100,1))
-
-
-
-
-
-
-
-
-
