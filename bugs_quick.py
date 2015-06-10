@@ -7,6 +7,7 @@ numActualBugs=39.0
 
 
 #build 4 charts
+plt.xkcd()
 plt.subplot(2,2,1)
 plt.plot(accValues, [x[0] for x in results],'g')
 plt.plot([accValues[0],accValues[-1]], [numActualBugs, numActualBugs],color='k', linewidth = 2, label="Num Bugs")
