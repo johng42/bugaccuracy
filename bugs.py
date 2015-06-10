@@ -86,11 +86,12 @@ def RunTheSim(testAccy = 0.9,
 accValues = [0.5, 0.667, 0.8, 0.9, 0.95, 0.99, 0.995, 0.999, 0.9999, 0.99999374]
 results = []
 for i in accValues:
-    results.append(RunTheSim(testAccy=i))
+    results.append(RunTheSim(testAccy=i, pctChanceofRegression=0.01))
 print results
 print accValues
 
 #build 4 charts
+plt.xkcd()
 plt.subplot(2,2,1)
 plt.plot(accValues, [x[0] for x in results],'g')
 plt.plot([accValues[0],accValues[-1]], [numActualBugs, numActualBugs],color='k', linewidth = 2, label="Num Bugs")
